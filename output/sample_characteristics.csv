@@ -1,0 +1,30 @@
+"Variable","Raw proportion","Weighted proportion"
+"Digital merchant payment propensity",0.37,0.34
+"Payment instrument",0.75,0.72
+"Electronic wages",0.32,0.29
+"15-29",0.29,0.32
+"30-44",0.3,0.29
+"45-59",0.21,0.21
+"60 and older",0.19,0.18
+"Primary or less",0.24,0.35
+"Secondary",0.51,0.5
+"Tertiary or more",0.25,0.15
+"Male",0.47,0.49
+"Female",0.53,0.51
+"Employed",0.67,0.64
+"Poorest 20%",0.16,0.2
+"Second 20%",0.17,0.2
+"Middle 20%",0.19,0.2
+"Fourth 20%",0.22,0.2
+"Richest 20%",0.26,0.2
+"Internet access",0.74,0.71
+"Mobile owner",0.9,0.89
+"Age: Not at all",0.31,0.3
+"Age: Somewhat",0.33,0.32
+"Age: Very",0.36,0.38
+"Medical: Not at all",0.28,0.27
+"Medical: Somewhat",0.29,0.28
+"Medical: Very",0.43,0.45
+"Bills: Not at all",0.39,0.37
+"Bills: Somewhat",0.29,0.29
+"Bills: Very",0.32,0.34

@@ -20,7 +20,7 @@ ewage_model <- model_ewage(df = micro)
 plot_ewage_results(model = ewage_model)
 
 # Save
-ggsave(filename = 'global_results.png', 
+ggsave(filename = 'Fig3.png', 
        path = 'output/', device = "png",
        width = 10, height = 6)
 
@@ -34,7 +34,17 @@ regional_model <- model_by_region(df = micro)
 plot_ewage_results(regional_model, by_region = TRUE)
 
 # Save
-ggsave(filename = 'regional_results.png', 
+ggsave(filename = 'Fig4.png', 
        path = 'output/', device = "png",
        width = 10, height = 7)
 
+
+# Summary Tables ----------------------------------------------------------
+
+# Uptake 
+generate_uptake_table(global_model = ewage_model,
+                      regional_model = regional_model)
+
+# Usage 
+generate_usage_table(global_model = ewage_model,
+                     regional_model = regional_model)

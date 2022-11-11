@@ -2,8 +2,10 @@
 
 ### Getting Started
 
-This repository contains the replication files for the paper, "Pay it forward (digitally): Sizing up the global impact of electronic wages on consumers’ digital payment propensity." It is recommended that users clone the repository into their
-local environment and run the following execution scripts in order: 
+This repository contains the replication files for the paper, "Pay it forward (digitally): Sizing up the global impact of electronic wages on consumers’ digital payment propensity." Though it is possible to download individual files and copy raw code contents, it is recommended that users clone the repository into their
+local environment. 
+
+The following execution scripts replicate the analysis in the paper: 
 
 * `01_ewage_dataprep.R`
 * `02_ewage_descriptive.R`
