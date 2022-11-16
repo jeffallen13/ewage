@@ -2,8 +2,7 @@
 
 ### Getting Started
 
-This repository contains the replication files for the paper, "Pay it forward (digitally): Sizing up the global impact of electronic wages on consumers’ digital payment propensity." Though it is possible to download individual files and copy raw code contents, it is recommended that users clone the repository into their
-local environment. 
+This repository contains the replication files for the paper, "Pay it forward (digitally): sizing up the global impact of electronic wages on consumers’ digital payment propensity." Users can either clone the repository or download the zip file. Both options are available under the green **Code** drop-down button.
 
 The following execution scripts replicate the analysis in the paper: 
 
