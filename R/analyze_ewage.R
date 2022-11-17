@@ -157,7 +157,7 @@ plot_ewage_results <- function(model,
     theme_bw() + 
     theme(axis.text = element_text(colour = "black")) + 
     labs(
-      title = "Marginal effects on digital merchant payment propensity",
+      title = "Marginal effects on likelihood of making digital merchant payments",
       subtitle = "Bands represent 95% confidence intervals",
       caption = "Categorical variable baselines: Age (15-29); Education (Primary); Income (Poorest 20%)",
       x = "", y = ""
@@ -191,7 +191,7 @@ plot_global_distribution <- function(df, bin_w = 15){
     theme_bw() + 
     labs(x = "Made digital merchant payment (% of adults)",
          y = "Density",
-         title = "Global Distribution of Digital Payment Usage")
+         title = "Global Distribution")
   
   p2 <- df %>% 
     dplyr::filter(!is.na(epay),
@@ -199,7 +199,7 @@ plot_global_distribution <- function(df, bin_w = 15){
     ggplot(aes(x = income_group, y = epay)) + 
     geom_boxplot() + 
     theme_bw() + 
-    labs(title = "Digital Payment Usage Across Income Groups",
+    labs(title = "Distribution Across Income Groups",
          x = "", 
          y = "Made digital merchant payment (% of adults)",
          caption = "Source: World Bank Global Findex Database (2021)")
@@ -269,9 +269,9 @@ summarize_sample <- function(df){
   
   summary_out <- summary_df %>% 
     dplyr::mutate(Variable = dplyr::case_when(
-      Variable == "epay" ~ "Digital merchant payment propensity",
-      Variable == "instrument" ~ "Payment instrument",
-      Variable == "e_wage" ~ "Electronic wages",
+      Variable == "epay" ~ "Made digital merchant payment",
+      Variable == "instrument" ~ "Owns payment instrument",
+      Variable == "e_wage" ~ "Received electronic wages",
       Variable == "age_g15-29" ~ "15-29",
       Variable == "age_g30-44" ~ "30-44",
       Variable == "age_g45-59" ~ "45-59",

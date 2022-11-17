@@ -1,7 +1,7 @@
 "Variable","Raw proportion","Weighted proportion"
-"Digital merchant payment propensity",0.37,0.34
-"Payment instrument",0.75,0.72
-"Electronic wages",0.32,0.29
+"Made digital merchant payment",0.37,0.34
+"Owns payment instrument",0.75,0.72
+"Received electronic wages",0.32,0.29
 "15-29",0.29,0.32
 "30-44",0.3,0.29
 "45-59",0.21,0.21
