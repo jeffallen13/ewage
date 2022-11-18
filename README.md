@@ -1,8 +1,8 @@
-## Sizing up the global impact of electronic wages on consumers’ digital payment propensity
+## Sizing up the Global Impact of Electronic Wages on Digital Payment Usage
 
 ### Getting Started
 
-This repository contains the replication files for the paper, "Pay it forward (digitally): sizing up the global impact of electronic wages on consumers’ digital payment propensity." Users can either clone the repository or download the zip file. Both options are available under the green **Code** drop-down button.
+This repository contains the replication files for the paper, "Pay it Forward (Digitally): Sizing up the Global Impact of Electronic Wages on Digital Payment Usage." Users can either clone the repository or download the zip file. Both options are available under the green **Code** drop-down button.
 
 The following execution scripts replicate the analysis in the paper: 
 
