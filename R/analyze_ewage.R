@@ -319,7 +319,7 @@ generate_uptake_table <- function(global_model, regional_model){
                     "Income: Fourth 20%", "Income: Richest 20%",
                     "Internet Access", "Mobile Owner",
                     "Worried Age: Somewhat", "Worried Age: Very",
-                    "Worred Medical: Somewhat", "Worried Medical: Very",
+                    "Worried Medical: Somewhat", "Worried Medical: Very",
                     "Worried Bills: Somewhat", "Worried Bills: Very")
   
   column_names <- c("Global", "EAP", "ECA", "HI-OECD", "HI-Other", "LAC",
