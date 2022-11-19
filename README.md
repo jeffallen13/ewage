@@ -10,7 +10,7 @@ The following execution scripts replicate the analysis in the paper:
 * `02_ewage_descriptive.R`
 * `03_ewage_analysis.R`
 
-Please see the additional notes about data access needs for running `01_ewage_dataprep.R` at the end of this welcome page. 
+Please see the additional notes about data access needs for running `01_ewage_dataprep.R` at the end of this welcome page. The Statistical Appendix referenced in the paper is located at: `output/Statistical_Appendix.pdf`.
 
 ### Folder Structure
 
@@ -20,7 +20,7 @@ Please see the additional notes about data access needs for running `01_ewage_da
 |-- 03_ewage_analysis.R     # model and analyze data using R/analyze_ewage.R
 |-- data                    # data produced by 01_ewage_dataprep.R
 |-- data-raw                # data used in 01_ewage_dataprep.R (see notes below) 
-|-- output                  # tables and figures in paper
+|-- output                  # tables, figures, and Statistical Appendix
 |-- R                       # backend functions that produce most of the analysis
 |   |-- analyze_ewage.R     # analytical functions
 |   |-- prep_ewage_data.R   # data preparation functions
