@@ -283,8 +283,9 @@ prep_country_data <- function(findex_path = "data-raw/ewage_findex.xlsx",
   
   groups_rev <- groups %>% 
     dplyr::rename(code = Code,
-                  income_group = `Income group`) %>% 
-    dplyr::select(code, income_group) %>% 
+                  income_group = `Income group`,
+                  region = Region) %>% 
+    dplyr::select(code, region, income_group) %>% 
     dplyr::filter(!is.na(income_group)) %>% 
     dplyr::mutate(income_group = dplyr::recode_factor(
       income_group,
@@ -296,5 +297,6 @@ prep_country_data <- function(findex_path = "data-raw/ewage_findex.xlsx",
   
   # Merge
   ewage_findex <- findex_rev %>% 
-    dplyr::left_join(groups_rev, by = "code")
+    dplyr::left_join(groups_rev, by = "code") %>% 
+    dplyr::filter(!is.na(region))
 }

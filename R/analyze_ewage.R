@@ -149,17 +149,17 @@ plot_ewage_results <- function(model,
   )
   
   appendix_caption <- 
-    "Effects are not depicted but are captured in the online statistical appendix."
+    "IMR effects are captured in the online statistical appendix."
   
   if(by_region){
     caption <- paste0(
-      "Model includes Inverse Mills Ratio. ",
+      "Model includes Inverse Mills Ratio (not depicted). ",
       appendix_caption, "\n", cat_caption
     )
   } else{
     caption <- paste0(
-      "Model includes regional fixed effects and Inverse Mills Ratio. ",
-      appendix_caption, "\n", cat_caption
+      "Model includes regional fixed effects and Inverse Mills Ratio ", 
+      "(not depicted). ", appendix_caption, "\n", cat_caption
     )
   }
   
@@ -264,7 +264,8 @@ plot_global_distribution <- function(df, bin_w = 15){
 
 # Plot relationship -------------------------------------------------------
 
-plot_ewage_dmp <- function(df, smooth = FALSE){
+plot_ewage_dmp <- function(df, smooth = FALSE, by_region = FALSE, 
+                           title = ""){
   
   p <- df %>% 
     dplyr::filter(!is.na(epay),
@@ -273,7 +274,7 @@ plot_ewage_dmp <- function(df, smooth = FALSE){
     geom_point() + 
     theme_bw() + 
     labs(
-      title = "",
+      title = title,
       caption = "Source: World Bank Global Findex Database (2021)",
       x = "Received wages into an account (% of adults)", 
       y = "Made digital merchant payment (% of adults)"
@@ -283,8 +284,29 @@ plot_ewage_dmp <- function(df, smooth = FALSE){
     p <- p + geom_smooth(method = "lm")
   }
   
+  if(by_region){
+    p <- p + facet_wrap(~region, scales = "free")
+  }
+  
   return(p)
   
+}
+
+
+# Plot regional distributions ---------------------------------------------
+
+plot_regional_distribution <- function(df, bin_w = 15){
+  
+  df %>% 
+    dplyr::select(region, epay) %>% 
+    na.omit() %>% 
+    ggplot(aes(x = epay, after_stat(density))) + 
+    geom_histogram(binwidth = bin_w) + 
+    facet_wrap(~region, scales = "free") + 
+    theme_bw() + 
+    labs(x = "Made digital merchant payment (% of adults)", 
+         y = "Density", 
+         title = "Figure A.1: Distribution of Digital Payment Usage by Region")
 }
 
 

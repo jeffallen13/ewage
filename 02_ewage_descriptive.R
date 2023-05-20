@@ -30,6 +30,28 @@ ggsave(filename = 'Fig2.png',
        width = 6, height = 4)
 
 
+# Distribution by region --------------------------------------------------
+
+plot_regional_distribution(df = country)
+
+# Save
+ggsave(filename = 'FigA1.png', 
+       path = 'output/', device = "png",
+       width = 11, height = 6)
+
+
+# Plot relationship by region ---------------------------------------------
+
+plot_ewage_dmp(df = country, by_region = TRUE, 
+               title = paste0("Figure A.2: Digital merchant payment penetration ", 
+                              "as a function of electronic wages (by Region)"))
+
+# Save
+ggsave(filename = 'FigA2.png', 
+       path = 'output/', device = "png",
+       width = 11, height = 6)
+
+
 # Sample characteristics --------------------------------------------------
 
 micro <- readRDS('data/ewage_microdata.rds')
