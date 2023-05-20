@@ -10,45 +10,71 @@
 
 # Model ewage -------------------------------------------------------------
 
-model_ewage <- function(df, region=""){
+model_ewage <- function(df, region=NULL){
   
   df <- na.omit(df)
   
-  if(region != ""){
+  if(!is.null(region)){
     if(!(region %in% unique(as.character(df$region)))){
       stop("Must select a valid region")
     }
     df <- df[df$region == region,]
   }
   
+
+  # Uptake model --------------------------------------------------------
+  
+  uptake_spec <- paste0(
+    "instrument ~ ",
+    # Demographics
+    "age_g + educ + sex + ",
+    # Economics
+    "inlf + inc_q + ",
+    # Connectivity
+    "internetaccess + mobileowner + ",
+    # Economic concern
+    "worried_age + worried_medical + worried_bills"
+    )
+  
+  # Add regional fixed effects to global model 
+  if(is.null(region)){
+    uptake_spec <- paste0(uptake_spec, " + region")
+  } 
+  
+  uptake_formula <- formula(uptake_spec)
+  
   suppressWarnings(
-    uptake <- glm(instrument ~
-                  # Demographics
-                  age_g + educ + sex + 
-                  # Economics
-                  inlf + inc_q + 
-                  # Connectivity
-                  internetaccess + mobileowner + 
-                  # Economic concern
-                  worried_age + worried_medical + worried_bills, 
-                family = binomial(link = "probit"),
-                weights = df$wgt, data = df)
+    uptake <- glm(uptake_formula, family = binomial(link = "probit"),
+                  weights = df$wgt, data = df)
     )
   
   df$IMR <- sampleSelection::invMillsRatio(uptake)$IMR1
 
+
+  # Usage model --------------------------------------------------------
+
+  usage_spec <- paste0(
+    # Treatment 
+    "epay ~ e_wage + ",
+    # Demographics
+    "age_g + educ + sex + ",
+    # Economics
+    "inlf + inc_q + ",
+    # Connectivity
+    "internetaccess + mobileowner + ",
+    # IMR
+    "IMR"
+  )
+  
+  # Add regional fixed effects to global model 
+  if(is.null(region)){
+    usage_spec <- paste0(usage_spec, " + region")
+  } 
+  
+  usage_formula <- formula(usage_spec)
+  
   suppressWarnings(
-    usage <- glm(epay ~
-                   # Treatment
-                   e_wage +
-                   # Demographics
-                   age_g + educ + sex + 
-                   # Economics
-                   inlf + inc_q + 
-                   # Connectivity
-                   internetaccess + mobileowner + 
-                   # IMR
-                   IMR, 
+    usage <- glm(usage_formula, 
                  family = binomial(link = "probit"),
                  weights = df[df$instrument == 1,]$wgt, 
                  data = df[df$instrument == 1,])
@@ -60,7 +86,12 @@ model_ewage <- function(df, region=""){
   
   usage_robust <- lmtest::coeftest(usage, vcov = usage_vcov)
   
-  usage_margins <- margins::margins(usage, vcov = usage_vcov)
+  margins_vars <- c("e_wage", "age_g", "educ", "sex", "inlf", "inc_q",
+                    "internetaccess", "mobileowner", "IMR")
+  
+  usage_margins <- margins::margins(usage, 
+                                    variables = margins_vars,
+                                    vcov = usage_vcov)
   
   usage_margins_summary <- summary(usage_margins)
   
@@ -72,7 +103,6 @@ model_ewage <- function(df, region=""){
        usage_margins = usage_margins,
        usage_margins_summary = usage_margins_summary,
        region = region)
-  
 }
 
 
@@ -107,10 +137,32 @@ model_by_region <- function(df){
 
 # Plot E-wage Results ------------------------------------------------------
 
+
 plot_ewage_results <- function(model,
                                by_region = FALSE,
                                region_limits = c(-0.3, 0.3),
                                region_text_size = 7){
+  
+  cat_caption <- paste0(
+    "Categorical variable baselines: Age (15-29); Education (Primary); ",
+    "Income (Poorest 20%)"
+  )
+  
+  appendix_caption <- 
+    "Effects are not depicted but are captured in the online statistical appendix."
+  
+  if(by_region){
+    caption <- paste0(
+      "Model includes Inverse Mills Ratio. ",
+      appendix_caption, "\n", cat_caption
+    )
+  } else{
+    caption <- paste0(
+      "Model includes regional fixed effects and Inverse Mills Ratio. ",
+      appendix_caption, "\n", cat_caption
+    )
+  }
+  
   if(by_region){
     # TODO: catch when using region without regions
     margins <- model$regional_usage_margins
@@ -156,10 +208,11 @@ plot_ewage_results <- function(model,
     geom_hline(yintercept = 0, linetype = 2) + 
     theme_bw() + 
     theme(axis.text = element_text(colour = "black")) + 
+    theme(plot.caption = element_text(hjust = 0)) +
     labs(
       title = "Marginal effects on likelihood of making digital merchant payments",
       subtitle = "Bands represent 95% confidence intervals",
-      caption = "Categorical variable baselines: Age (15-29); Education (Primary); Income (Poorest 20%)",
+      caption = caption,
       x = "", y = ""
     )
   
@@ -169,7 +222,7 @@ plot_ewage_results <- function(model,
       coord_flip(ylim = region_limits) + 
       theme(axis.text.y = element_text(size = region_text_size))
   } else{
-    m_plot <- m_plot + coord_flip()
+    m_plot <- m_plot + coord_flip(ylim = c(-.2, .2))
   }
   
   return(m_plot)
