@@ -60,6 +60,18 @@ format_vars <- function(df, binary_integers = TRUE){
       TRUE ~ "60 and older"
     )) %>% 
     dplyr::mutate(age_g = factor(age_g)) %>% 
+    # First, create alternative depvars for robustness
+    dplyr::mutate(debit_dv = dplyr::case_when(
+      store_debit == 1 ~ 1, 
+      store_debit == 2 | is.na(store_debit) ~ 0,
+      TRUE ~ NA
+    )) %>% 
+    # There are no NAs for store mobile
+    dplyr::mutate(mobile_dv = dplyr::case_when(
+      store_mobile == 1 ~ 1, 
+      store_mobile == 2 ~ 0,
+      TRUE ~ NA
+    )) %>% 
     # Convert labelled integers to factors
     dplyr::mutate(dplyr::across(where(haven::is.labelled), haven::as_factor)) %>% 
     # Convert "Don't Know" and "Refused to NA
@@ -216,6 +228,33 @@ add_instrument <- function(df){
 }
 
 
+# Add EPA Controls --------------------------------------------------------
+
+add_epa_controls <- function(df, 
+                             epa_path = "data-raw/ewage_epa.xlsx",
+                             transactions = "data-raw/euro_passport.csv"){
+  
+  # Card transactions per capita: 2021
+  transactions <- read.csv(transactions)
+  
+  # EPA vars: 2015 (most recent available)
+  epa <- readxl::read_excel(epa_path, 
+                            range = readxl::cell_rows(1:435),
+                            sheet = "Data", na = "..") %>% 
+    dplyr::filter(Time == 2015) %>% 
+    dplyr::rename(
+      code = `Country Code`,
+      pos_100K = `POS terminals per 100,000 adults [GPSS_4]`,
+      epay_trans_1K = `Retail cashless transactions per 1,000 adults [GPSS_2]`) %>% 
+    dplyr::select(code, pos_100K, epay_trans_1K) %>% 
+    dplyr::filter(!is.na(pos_100K) | !is.na(epay_trans_1K)) %>% 
+    dplyr::left_join(transactions, by = "code") %>% 
+    dplyr::rename(economycode = code)
+  
+  df %>% dplyr::left_join(epa, by = "economycode")
+}
+
+
 # Custom order ------------------------------------------------------------
 
 customize_order <- function(df){
@@ -239,7 +278,11 @@ customize_order <- function(df){
       # Connectivity
       internetaccess, mobileowner,
       # Worried
-      starts_with("worried_")
+      starts_with("worried_"),
+      # Alternative DVs
+      debit_dv, mobile_dv, 
+      # EPA controls
+      pos_100K, epay_trans_1K, card_payments_pc
     )
 }
 
@@ -255,6 +298,7 @@ prep_microdata <- function(df){
     impute_inlf() %>% 
     add_depvar() %>% 
     add_instrument() %>% 
+    add_epa_controls() %>% 
     customize_order()
 }
 

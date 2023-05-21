@@ -12,7 +12,11 @@
 
 model_ewage <- function(df, region=NULL){
   
-  df <- na.omit(df)
+  # Remove robustness vars and NAs
+  df <- df %>% 
+    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K,
+                     card_payments_pc)) %>% 
+    na.omit()
   
   if(!is.null(region)){
     if(!(region %in% unique(as.character(df$region)))){
@@ -483,7 +487,7 @@ generate_usage_table <- function(global_model, regional_model){
   
   for(i in seq_along(results)){
     results[[i]] <- format_usage_coefs(model = models[[i]])
-    names(results)[i] <- ifelse(models[[i]]$region == "", "Global",
+    names(results)[i] <- ifelse(is.null(models[[i]]$region), "Global",
                                 models[[i]]$region)
   }
   
@@ -547,4 +551,113 @@ generate_usage_table <- function(global_model, regional_model){
                        dep.var.caption = caption,
                        dep.var.labels = "",
                        column.labels = column_names)
+}
+
+
+#----------------------------------------------------------------------------#
+# Robustness checks
+#----------------------------------------------------------------------------#
+
+# Conduct robustness check  ------------------------------------------------
+
+check_robustness <- function(df, var = "debit_dv"){
+  
+  robust <- df[var]
+  
+  # Remove robustness vars, add back var in focus, remove NAs
+  df <- df %>% 
+    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K,
+                     card_payments_pc)) %>% 
+    dplyr::bind_cols(robust) %>% 
+    na.omit()
+  
+  
+  # Uptake model --------------------------------------------------------
+  
+  uptake_spec <- paste0(
+    "instrument ~ ",
+    # Demographics
+    "age_g + educ + sex + ",
+    # Economics
+    "inlf + inc_q + ",
+    # Connectivity
+    "internetaccess + mobileowner + ",
+    # Economic concern
+    "worried_age + worried_medical + worried_bills + ",
+    # Regional fixed effects
+    "region"
+  )
+  
+  if(var %in% c("pos_100K", "epay_trans_1K", "card_payments_pc")){
+    uptake_spec <- paste0(uptake_spec, " + ", var)
+  }
+  
+  uptake_formula <- formula(uptake_spec)
+  
+  suppressWarnings(
+    uptake <- glm(uptake_formula, family = binomial(link = "probit"),
+                  weights = df$wgt, data = df)
+  )
+  
+  df$IMR <- sampleSelection::invMillsRatio(uptake)$IMR1
+  
+  
+  # Usage model --------------------------------------------------------
+  
+  usage_spec <- paste0(
+    # Treatment 
+    "epay ~ e_wage + ",
+    # Demographics
+    "age_g + educ + sex + ",
+    # Economics
+    "inlf + inc_q + ",
+    # Connectivity
+    "internetaccess + mobileowner + ",
+    # IMR
+    "IMR + ",
+    # Regional fixed effects
+    "region"
+  )
+  
+  if(var %in% c("pos_100K", "epay_trans_1K", "card_payments_pc")){
+    usage_spec <- paste0(usage_spec, " + ", var)
+  } else{
+    usage_spec <- gsub("epay", var, usage_spec)
+  }
+  
+  usage_formula <- formula(usage_spec)
+  
+  suppressWarnings(
+    usage <- glm(usage_formula, 
+                 family = binomial(link = "probit"),
+                 weights = df[df$instrument == 1,]$wgt, 
+                 data = df[df$instrument == 1,])
+  )  
+  
+  usage_vcov <- sandwich::vcovCL(usage, cluster = ~economycode)
+  
+  usage_cse <- sqrt(diag(usage_vcov))
+  
+  usage_robust <- lmtest::coeftest(usage, vcov = usage_vcov)
+  
+  margins_vars <- c("e_wage", "age_g", "educ", "sex", "inlf", "inc_q",
+                    "internetaccess", "mobileowner", "IMR")
+  
+  if(var %in% c("pos_100K", "epay_trans_1K", "card_payments_pc")){
+    margins_vars <- c(margins_vars, var)
+  }
+  
+  usage_margins <- margins::margins(usage, 
+                                    variables = margins_vars,
+                                    vcov = usage_vcov)
+  
+  usage_margins_summary <- summary(usage_margins)
+  
+  list(uptake = uptake,
+       usage = usage, 
+       usage_vcov = usage_vcov,
+       usage_cse = usage_cse,
+       usage_robust = usage_robust,
+       usage_margins = usage_margins,
+       usage_margins_summary = usage_margins_summary)
 }
