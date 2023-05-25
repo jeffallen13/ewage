@@ -419,6 +419,7 @@ generate_uptake_table <- function(global_model, regional_model){
   m9 <- regional_model$`Sub-Saharan Africa`$uptake
   
   stargazer::stargazer(m1, m2, m3, m4, m5, m6, m7, m8, m9,
+                       omit = "region",
                        out = "output/uptake.html",
                        title = "Probit Selection Equations",
                        no.space = TRUE, 
@@ -437,6 +438,7 @@ format_usage_coefs <- function(model){
   margins <- model$usage_margins_summary
   
   names(margins$SE) <- NULL
+  names(margins$AME) <- NULL
   
   margins_rev <- margins %>% 
     dplyr::mutate(driver = factor(factor,
@@ -497,7 +499,8 @@ generate_usage_table <- function(global_model, regional_model){
                    "Sex: Female", "Employed",
                    "Income: Second 20%", "Income: Middle 20%",
                    "Income: Fourth 20%", "Income: Richest 20%",
-                   "Internet Access", "Mobile Owner", "IMR")
+                   "Internet Access", "Mobile Owner", "IMR", 
+                   "Constant")
   
   column_names <- c("Global", "EAP", "ECA", "HI-OECD", "HI-Other", "LAC",
                     "MENA", "SAS", "SSA")
@@ -541,6 +544,7 @@ generate_usage_table <- function(global_model, regional_model){
   m9 <- regional_model$`Sub-Saharan Africa`$usage
   
   stargazer::stargazer(m1, m2, m3, m4, m5, m6, m7, m8, m9,
+                       omit = "region",
                        coef = usage_coefs,
                        se = usage_se,
                        out = "output/usage.html",
