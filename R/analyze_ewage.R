@@ -433,32 +433,38 @@ generate_uptake_table <- function(global_model, regional_model){
 
 # Usage Formatting --------------------------------------------------------
 
-format_usage_coefs <- function(model){
+format_usage_coefs <- function(model, epa_var = NULL){
+  
+  driver_levels <- c(
+    "e_wage",
+    "age_g30-44",
+    "age_g45-59",
+    "age_g60 and older",
+    "educsecondary",
+    "eductertiary",
+    "sexFemale",
+    "inlf",
+    "inc_qSecond 20%",
+    "inc_qMiddle 20%",
+    "inc_qFourth 20%",
+    "inc_qRichest 20%",
+    "internetaccess",
+    "mobileowner",
+    "IMR"
+  )
+  
+  if(!is.null(epa_var)){
+    driver_levels <- c(driver_levels, epa_var)
+  }
   
   margins <- model$usage_margins_summary
   
   names(margins$SE) <- NULL
+  
   names(margins$AME) <- NULL
   
   margins_rev <- margins %>% 
-    dplyr::mutate(driver = factor(factor,
-                                  levels = c(
-                                    "e_wage",
-                                    "age_g30-44",
-                                    "age_g45-59",
-                                    "age_g60 and older",
-                                    "educsecondary",
-                                    "eductertiary",
-                                    "sexFemale",
-                                    "inlf",
-                                    "inc_qSecond 20%",
-                                    "inc_qMiddle 20%",
-                                    "inc_qFourth 20%",
-                                    "inc_qRichest 20%",
-                                    "internetaccess",
-                                    "mobileowner",
-                                    "IMR"
-                                  ))) %>% 
+    dplyr::mutate(driver = factor(factor, levels = driver_levels)) %>% 
     dplyr::arrange(driver) %>% 
     dplyr::mutate(driver = as.character(driver)) %>% 
     dplyr::select(driver, AME, SE) %>% 
@@ -664,4 +670,104 @@ check_robustness <- function(df, var = "debit_dv"){
        usage_robust = usage_robust,
        usage_margins = usage_margins,
        usage_margins_summary = usage_margins_summary)
+}
+
+
+# Robustness Table ----------------------------------------------------------
+
+generate_robustness_table <- function(models, epa = FALSE){
+  
+  # models: a list of models 
+  
+  results <- vector(mode = "list", length = length(models))
+  
+  epa_vars <- c("pos_100K", "epay_trans_1K", "card_payments_pc")
+  
+  usage_base <- c("Electronic Wages",
+                  "Age: 30-44", "Age: 45-59", "Age: 60 and Up",
+                  "Education: Secondary", "Education: Tertiary",
+                  "Sex: Female", "Employed",
+                  "Income: Second 20%", "Income: Middle 20%",
+                  "Income: Fourth 20%", "Income: Richest 20%",
+                  "Internet Access", "Mobile Owner", "IMR")
+  
+  if(epa){
+    
+    for(i in seq_along(results)){
+      results[[i]] <- format_usage_coefs(model = models[[i]], 
+                                         epa_var = epa_vars[i])
+    }
+    
+    usage_names <- c(usage_base, epa_vars, "Constant")
+    
+    column_names <- c("POS Terminals", "Noncash Transactions", "Card Payments")
+    
+    caption <- "Dependent Variable: Made Digital Merchant Payment"
+    
+    title <- "Electronic Payment Acceptance (EPA) Controls"
+    
+    usage_coefs <- list(
+      results[[1]]$AME, results[[2]]$AME, results[[3]]$AME
+    )
+    
+    usage_se <- list(
+      results[[1]]$SE, results[[2]]$SE, results[[3]]$SE
+    )
+    
+    m1 <- models[[1]]$usage
+    m2 <- models[[2]]$usage
+    m3 <- models[[3]]$usage
+    
+    stargazer::stargazer(m1, m2, m3, 
+                         omit = "region",
+                         coef = usage_coefs,
+                         se = usage_se,
+                         out = "output/epa_controls.html",
+                         title = title,
+                         no.space = TRUE, 
+                         align = TRUE,
+                         covariate.labels = usage_base,
+                         dep.var.caption = caption,
+                         dep.var.labels = "",
+                         column.labels = column_names
+                         )
+    
+  } else{
+    
+    for(i in seq_along(results)){
+      results[[i]] <- format_usage_coefs(model = models[[i]])
+    }
+    
+    usage_names <- c(usage_base, "Constant")
+    
+    column_names <- c("Debit Card", "Mobile Phone")
+    
+    caption <- "Made Digital Merchant Payment Using:"
+    
+    title <- "Alternative Versions of Dependent Variable"
+    
+    usage_coefs <- list(
+      results[[1]]$AME, results[[2]]$AME
+    )
+    
+    usage_se <- list(
+      results[[1]]$SE, results[[2]]$SE
+    )
+    
+    m1 <- models[[1]]$usage
+    m2 <- models[[2]]$usage
+    
+    stargazer::stargazer(m1, m2,
+                         omit = "region",
+                         coef = usage_coefs,
+                         se = usage_se,
+                         out = "output/robustness_alt_dv.html",
+                         title = title,
+                         no.space = TRUE, 
+                         align = TRUE,
+                         covariate.labels = usage_names,
+                         dep.var.caption = caption,
+                         dep.var.labels = "",
+                         column.labels = column_names)
+  }
 }

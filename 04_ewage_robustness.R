@@ -20,7 +20,6 @@ alt1$usage_robust
 
 alt1$usage_margins_summary
 
-
 # Used a mobile phone to make a merchant payment 
 
 alt2 <- check_robustness(df = micro, var = "mobile_dv")
@@ -40,7 +39,6 @@ epa1$usage_robust
 
 epa1$usage_margins_summary
 
-
 # Noncash transactions
 
 epa2 <- check_robustness(df = micro, var = "epay_trans_1K")
@@ -49,7 +47,6 @@ epa2$usage_robust
 
 epa2$usage_margins_summary
 
-
 # Card transactions
 
 epa3 <- check_robustness(df = micro, var = "card_payments_pc")
@@ -57,6 +54,4 @@ epa3 <- check_robustness(df = micro, var = "card_payments_pc")
 epa3$usage_robust
 
 epa3$usage_margins_summary
-
-
 
