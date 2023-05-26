@@ -47,11 +47,3 @@ epa2$usage_robust
 
 epa2$usage_margins_summary
 
-# Card transactions
-
-epa3 <- check_robustness(df = micro, var = "card_payments_pc")
-
-epa3$usage_robust
-
-epa3$usage_margins_summary
-
