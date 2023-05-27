@@ -14,8 +14,7 @@ model_ewage <- function(df, region=NULL){
   
   # Remove robustness vars and NAs
   df <- df %>% 
-    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K,
-                     card_payments_pc)) %>% 
+    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K)) %>% 
     na.omit()
   
   if(!is.null(region)){
@@ -224,9 +223,13 @@ plot_ewage_results <- function(model,
     m_plot <- m_plot + 
       facet_wrap(~region) + 
       coord_flip(ylim = region_limits) + 
+      scale_y_continuous(breaks = c(-.3, -.2, -.1, 0, .1, .2, .3)) + 
       theme(axis.text.y = element_text(size = region_text_size))
   } else{
-    m_plot <- m_plot + coord_flip(ylim = c(-.2, .2))
+    m_plot <- m_plot + 
+      coord_flip(ylim = c(-.2, .2)) + 
+      scale_y_continuous(breaks = c(-.20, -.15, -.10, -.05,
+                                    0, .05, .10, .15, .20))
   }
   
   return(m_plot)
@@ -576,8 +579,7 @@ check_robustness <- function(df, var = "debit_dv"){
   
   # Remove robustness vars, add back var in focus, remove NAs
   df <- df %>% 
-    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K,
-                     card_payments_pc)) %>% 
+    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K)) %>% 
     dplyr::bind_cols(robust) %>% 
     na.omit()
   
@@ -598,7 +600,7 @@ check_robustness <- function(df, var = "debit_dv"){
     "region"
   )
   
-  if(var %in% c("pos_100K", "epay_trans_1K", "card_payments_pc")){
+  if(var %in% c("pos_100K", "epay_trans_1K")){
     uptake_spec <- paste0(uptake_spec, " + ", var)
   }
   
@@ -629,7 +631,7 @@ check_robustness <- function(df, var = "debit_dv"){
     "region"
   )
   
-  if(var %in% c("pos_100K", "epay_trans_1K", "card_payments_pc")){
+  if(var %in% c("pos_100K", "epay_trans_1K")){
     usage_spec <- paste0(usage_spec, " + ", var)
   } else{
     usage_spec <- gsub("epay", var, usage_spec)
@@ -653,7 +655,7 @@ check_robustness <- function(df, var = "debit_dv"){
   margins_vars <- c("e_wage", "age_g", "educ", "sex", "inlf", "inc_q",
                     "internetaccess", "mobileowner", "IMR")
   
-  if(var %in% c("pos_100K", "epay_trans_1K", "card_payments_pc")){
+  if(var %in% c("pos_100K", "epay_trans_1K")){
     margins_vars <- c(margins_vars, var)
   }
   
@@ -681,7 +683,7 @@ generate_robustness_table <- function(models, epa = FALSE){
   
   results <- vector(mode = "list", length = length(models))
   
-  epa_vars <- c("pos_100K", "epay_trans_1K", "card_payments_pc")
+  epa_vars <- c("pos_100K", "epay_trans_1K")
   
   usage_base <- c("Electronic Wages",
                   "Age: 30-44", "Age: 45-59", "Age: 60 and Up",

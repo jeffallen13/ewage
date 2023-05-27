@@ -230,12 +230,7 @@ add_instrument <- function(df){
 
 # Add EPA Controls --------------------------------------------------------
 
-add_epa_controls <- function(df, 
-                             epa_path = "data-raw/ewage_epa.xlsx",
-                             transactions = "data-raw/euro_passport.csv"){
-  
-  # Card transactions per capita: 2021
-  transactions <- read.csv(transactions)
+add_epa_controls <- function(df, epa_path = "data-raw/ewage_epa.xlsx"){
   
   # EPA vars: 2015 (most recent available)
   epa <- readxl::read_excel(epa_path, 
@@ -248,7 +243,6 @@ add_epa_controls <- function(df,
       epay_trans_1K = `Retail cashless transactions per 1,000 adults [GPSS_2]`) %>% 
     dplyr::select(code, pos_100K, epay_trans_1K) %>% 
     dplyr::filter(!is.na(pos_100K) | !is.na(epay_trans_1K)) %>% 
-    dplyr::left_join(transactions, by = "code") %>% 
     dplyr::rename(economycode = code)
   
   df %>% dplyr::left_join(epa, by = "economycode")
@@ -282,7 +276,7 @@ customize_order <- function(df){
       # Alternative DVs
       debit_dv, mobile_dv, 
       # EPA controls
-      pos_100K, epay_trans_1K, card_payments_pc
+      pos_100K, epay_trans_1K
     )
 }
 
