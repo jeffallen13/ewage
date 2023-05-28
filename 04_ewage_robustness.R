@@ -47,3 +47,10 @@ epa2$usage_robust
 
 epa2$usage_margins_summary
 
+
+# E-wage and INLF Interaction ---------------------------------------------
+
+interaction <- model_ewage_interaction(df = micro)
+
+interaction$usage_robust
+

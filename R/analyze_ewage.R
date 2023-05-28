@@ -773,3 +773,110 @@ generate_robustness_table <- function(models, epa = FALSE){
                          column.labels = column_names)
   }
 }
+
+
+# Model ewage interaction -------------------------------------------------
+
+model_ewage_interaction <- function(df){
+  
+  # Remove robustness vars, remove NAs
+  df <- df %>% 
+    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K)) %>% 
+    na.omit()
+  
+  # Uptake model --------------------------------------------------------
+  
+  uptake_spec <- paste0(
+    "instrument ~ ",
+    # Demographics
+    "age_g + educ + sex + ",
+    # Economics
+    "inlf + inc_q + ",
+    # Connectivity
+    "internetaccess + mobileowner + ",
+    # Economic concern
+    "worried_age + worried_medical + worried_bills + ",
+    # Regional fixed effects
+    "region"
+  )
+  
+  uptake_formula <- formula(uptake_spec)
+  
+  suppressWarnings(
+    uptake <- glm(uptake_formula, family = binomial(link = "probit"),
+                  weights = df$wgt, data = df)
+  )
+  
+  df$IMR <- sampleSelection::invMillsRatio(uptake)$IMR1
+  
+  
+  # Usage model --------------------------------------------------------
+  
+  usage_spec <- paste0(
+    # Treatment interacted with inlf
+    "epay ~ e_wage*inlf + ",
+    # Demographics
+    "age_g + educ + sex + ",
+    # income
+    "inc_q + ",
+    # Connectivity
+    "internetaccess + mobileowner + ",
+    # IMR
+    "IMR + ",
+    # Regional fixed effects
+    "region"
+  )
+  
+  usage_formula <- formula(usage_spec)
+  
+  suppressWarnings(
+    usage <- glm(usage_formula, 
+                 family = binomial(link = "probit"),
+                 weights = df[df$instrument == 1,]$wgt, 
+                 data = df[df$instrument == 1,])
+  )  
+  
+  usage_vcov <- sandwich::vcovCL(usage, cluster = ~economycode)
+  
+  usage_cse <- sqrt(diag(usage_vcov))
+  
+  usage_robust <- lmtest::coeftest(usage, vcov = usage_vcov)
+  
+  list(uptake = uptake,
+       usage = usage, 
+       usage_vcov = usage_vcov,
+       usage_cse = usage_cse,
+       usage_robust = usage_robust)
+}
+
+
+# Interaction table -------------------------------------------------------
+
+generate_interaction_table <- function(model){
+  
+  title <- "Table A.3. Electronic Wages and Employment Interaction Effects"
+  
+  caption <- "Dependent Variable: Made Digital Merchant Payment"
+  
+  usage_names <- c("Electronic Wages", "Employed",
+                  "Age: 30-44", "Age: 45-59", "Age: 60 and Up",
+                  "Education: Secondary", "Education: Tertiary",
+                  "Sex: Female", 
+                  "Income: Second 20%", "Income: Middle 20%",
+                  "Income: Fourth 20%", "Income: Richest 20%",
+                  "Internet Access", "Mobile Owner", "IMR",
+                  "Electronic Wages:Employed")
+  
+  stargazer::stargazer(model$usage,
+                       omit = "region",
+                       se = list(model$usage_cse),
+                       out = "output/interaction.html",
+                       title = title,
+                       no.space = TRUE, 
+                       align = TRUE,
+                       covariate.labels = usage_names,
+                       dep.var.caption = caption,
+                       dep.var.labels = ""
+                       )
+  
+}
