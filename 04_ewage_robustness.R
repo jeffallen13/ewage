@@ -4,6 +4,7 @@
 #-----------------------------------------------------------------------------#
 
 library(magrittr)
+library(ggplot2)
 
 source('R/analyze_ewage.R')
 
@@ -54,3 +55,14 @@ interaction <- model_ewage_interaction(df = micro)
 
 interaction$usage_robust
 
+
+# One Stage Regional ------------------------------------------------------
+
+regional_one_stage <- model_by_region(df = micro, one_stage = TRUE)
+
+plot_one_stage(regional_one_stage, by_region = TRUE)
+
+# Save
+ggsave(filename = 'FigA3.png', 
+       path = 'output/', device = "png",
+       width = 10, height = 7)

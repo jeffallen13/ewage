@@ -123,16 +123,102 @@ model_ewage <- function(df, region=NULL){
 }
 
 
+# Model One Stage ---------------------------------------------------------
+
+model_one_stage <- function(df, region=NULL){
+  
+  # Remove robustness vars and NAs
+  df <- df %>% 
+    dplyr::select(-c(debit_dv, mobile_dv, pos_100K, epay_trans_1K)) %>% 
+    na.omit()
+  
+  if(!is.null(region)){
+    if(!(region %in% unique(as.character(df$region)))){
+      stop("Must select a valid region")
+    }
+    df <- df[df$region == region,]
+  }
+  
+  usage_spec <- paste0(
+    # Treatment 
+    "epay ~ e_wage + ",
+    # Demographics
+    "age_g + educ + sex + ",
+    # Economics
+    "inlf + inc_q + ",
+    # Connectivity
+    "internetaccess + mobileowner"
+  )
+  
+  # Add regional fixed effects to global model 
+  if(is.null(region)){
+    usage_spec <- paste0(usage_spec, " + region")
+  } 
+  
+  usage_formula <- formula(usage_spec)
+  
+  suppressWarnings(
+    usage <- glm(usage_formula, 
+                 family = binomial(link = "probit"),
+                 weights = df$wgt, 
+                 data = df)
+  )  
+  
+  usage_vcov <- sandwich::vcovCL(usage, cluster = ~economycode)
+  
+  usage_cse <- sqrt(diag(usage_vcov))
+  
+  usage_robust <- lmtest::coeftest(usage, vcov = usage_vcov)
+  
+  margins_vars <- c("e_wage", "age_g", "educ", "sex", "inlf", "inc_q",
+                    "internetaccess", "mobileowner")
+  
+  usage_margins <- margins::margins(usage, 
+                                    variables = margins_vars,
+                                    vcov = usage_vcov)
+  
+  usage_margins_summary <- summary(usage_margins)
+  
+  # If regions is Null, store regional mfx. Null means we have included regions 
+  # in the global model instead of modeling by region. 
+  if(is.null(region)){
+    regions_mfx <- margins::margins(usage, 
+                                    variables = "region",
+                                    vcov = usage_vcov)
+    regions_mfx_summary <- summary(regions_mfx)
+  } else{
+    regions_mfx <- NULL
+    regions_mfx_summary <- NULL
+  }
+  
+  list(usage = usage, 
+       usage_vcov = usage_vcov,
+       usage_cse = usage_cse,
+       usage_robust = usage_robust,
+       usage_margins = usage_margins,
+       usage_margins_summary = usage_margins_summary,
+       regions_mfx = regions_mfx,
+       regions_mfx_summary = regions_mfx_summary,
+       region = region)
+}
+
+
 # Model by Region ---------------------------------------------------------
 
-model_by_region <- function(df){
+model_by_region <- function(df, one_stage = FALSE){
   
   regions <- sort(unique(df$region))
   
   reg_list <- vector(mode = "list", length = length(regions))
   
-  for(i in seq_along(regions)){
-    reg_list[[i]] <- model_ewage(df = df, region = regions[i])
+  if(one_stage){
+    for(i in seq_along(regions)){
+      reg_list[[i]] <- model_one_stage(df = df, region = regions[i])
+    }
+  } else{
+    for(i in seq_along(regions)){
+      reg_list[[i]] <- model_ewage(df = df, region = regions[i])
+    }
   }
   
   names(reg_list) <- regions
@@ -292,6 +378,94 @@ plot_regional_mfx <- function(model,
                         "Bands represent 95% confidence intervals."),
       x = "", y = ""
     )
+}
+
+
+# Plot one stage ----------------------------------------------------------
+
+plot_one_stage <- function(model,
+                           by_region = FALSE,
+                           region_limits = c(-0.3, 0.4),
+                           region_text_size = 7){
+  
+  cat_caption <- paste0(
+    "Categorical variable baselines: Age (15-29); Education (Primary); ",
+    "Income (Poorest 20%)"
+  )
+  
+  if(by_region){
+    caption <- cat_caption
+  } else{
+    caption <- paste0(
+      "Model includes regional fixed effects (not depicted).", 
+      "\n", cat_caption
+    )
+  }
+  
+  if(by_region){
+    margins <- model$regional_usage_margins
+    margins_temp <- margins %>% 
+      dplyr::select(factor, region, AME, lower, upper) %>% 
+      dplyr::filter(factor != "mobileowner")
+  } else{
+    margins <- model$usage_margins_summary
+    margins_temp <- margins %>% 
+      dplyr::select(factor, AME, lower, upper)
+  }
+  
+  margins_rev <- margins_temp %>% 
+    dplyr::filter(factor != "IMR") %>% 
+    tidyr::pivot_longer(c(AME, lower, upper), names_to = "metric") %>% 
+    dplyr::mutate(driver = as.factor(factor)) %>% 
+    dplyr::mutate(driver = dplyr::recode_factor(
+      driver, 
+      `mobileowner` = "Mobile Owner",
+      `internetaccess` = "Internet Access",
+      `inc_qRichest 20%` = "Income: Richest 20%",
+      `inc_qFourth 20%` = "Income: Fourth 20%",
+      `inc_qMiddle 20%` = "Income: Middle 20%",
+      `inc_qSecond 20%` = "Income: Second 20%",
+      `inlf` = "Employed",
+      `sexFemale` = "Female",
+      `eductertiary` = "Education: Tertiary",
+      `educsecondary` = "Education: Secondary",
+      `age_g60 and older` = "Age: 60 and Up",
+      `age_g45-59` = "Age: 45-59",
+      `age_g30-44` = "Age: 30-44",
+      `e_wage` = "Electronic Wages"
+    ))
+  
+  m_plot <- 
+    ggplot(data = margins_rev) + 
+    stat_summary(
+      mapping = aes(x = driver, y = value),
+      fun.min = min, fun.max = max, fun = median
+    ) + 
+    geom_hline(yintercept = 0, linetype = 2) + 
+    theme_bw() + 
+    theme(axis.text = element_text(colour = "black")) + 
+    theme(plot.caption = element_text(hjust = 0)) +
+    labs(
+      title = "Figure A.3: Marginal effects on likelihood of making digital merchant payments",
+      subtitle = "One-stage model. Bands represent 95% confidence intervals",
+      caption = caption,
+      x = "", y = ""
+    )
+  
+  if(by_region){
+    m_plot <- m_plot + 
+      facet_wrap(~region) + 
+      coord_flip(ylim = region_limits) + 
+      scale_y_continuous(breaks = c(-.3, -.2, -.1, 0, .1, .2, .3, .4)) + 
+      theme(axis.text.y = element_text(size = region_text_size))
+  } else{
+    m_plot <- m_plot + 
+      coord_flip(ylim = c(-.2, .2)) + 
+      scale_y_continuous(breaks = c(-.20, -.15, -.10, -.05,
+                                    0, .05, .10, .15, .20))
+  }
+  
+  return(m_plot)
 }
 
 #-----------------------------------------------------------------------------#
