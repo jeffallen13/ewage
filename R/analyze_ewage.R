@@ -98,6 +98,18 @@ model_ewage <- function(df, region=NULL){
   
   usage_margins_summary <- summary(usage_margins)
   
+  # If regions is Null, store regional mfx. Null means we have included regions 
+  # in the global model instead of modeling by region. 
+  if(is.null(region)){
+    regions_mfx <- margins::margins(usage, 
+                                    variables = "region",
+                                    vcov = usage_vcov)
+    regions_mfx_summary <- summary(regions_mfx)
+  } else{
+    regions_mfx <- NULL
+    regions_mfx_summary <- NULL
+  }
+  
   list(uptake = uptake,
        usage = usage, 
        usage_vcov = usage_vcov,
@@ -105,6 +117,8 @@ model_ewage <- function(df, region=NULL){
        usage_robust = usage_robust,
        usage_margins = usage_margins,
        usage_margins_summary = usage_margins_summary,
+       regions_mfx = regions_mfx,
+       regions_mfx_summary = regions_mfx_summary,
        region = region)
 }
 
@@ -233,6 +247,51 @@ plot_ewage_results <- function(model,
   }
   
   return(m_plot)
+}
+
+
+# Plot regional MFX -------------------------------------------------------
+
+plot_regional_mfx <- function(model,
+                              region_limits = c(-0.3, 0.3),
+                              region_text_size = 7){
+  
+  margins <- model$regions_mfx_summary
+  
+  margins_temp <- margins %>% dplyr::select(factor, AME, lower, upper)
+  
+  margins_rev <- margins_temp %>% 
+    tidyr::pivot_longer(c(AME, lower, upper), names_to = "metric") %>% 
+    dplyr::mutate(driver = as.factor(factor)) %>% 
+    dplyr::mutate(driver = dplyr::recode_factor(
+      driver, 
+      `regionSub-Saharan Africa` = "Sub-Saharan Africa",
+      `regionSouth Asia` = "South Asia",
+      `regionMiddle East & North Africa` = "Middle East & North Africa",
+      `regionLatin America & Caribbean` = "Latin America & Caribbean",
+      `regionHigh income: OECD` = "High income: OECD",
+      `regionHigh income: non-OECD` = "High income: non-OECD",
+      `regionEurope & Central Asia` = "Europe & Central Asia"
+    ))
+  
+  ggplot(data = margins_rev) + 
+    stat_summary(
+      mapping = aes(x = driver, y = value),
+      fun.min = min, fun.max = max, fun = median
+    ) + 
+    geom_hline(yintercept = 0, linetype = 2) + 
+    theme_bw() + 
+    theme(axis.text = element_text(colour = "black")) + 
+    theme(plot.caption = element_text(hjust = 0)) +
+    coord_flip() +
+    scale_y_continuous(breaks = c(-0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1)) +
+    labs(
+      title = paste0("Marginal effects of regions on likelihood of making ", 
+                     "digital merchant payments"),
+      subtitle = paste0("Baseline region is East Asia & Pacific. ", 
+                        "Bands represent 95% confidence intervals."),
+      x = "", y = ""
+    )
 }
 
 #-----------------------------------------------------------------------------#

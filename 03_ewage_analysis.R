@@ -24,17 +24,25 @@ ggsave(filename = 'Fig3.png',
        path = 'output/', device = "png",
        width = 10, height = 6)
 
+# Regional mfx in global model (Figure 4)
+plot_regional_mfx(model = ewage_model)
+
+# Save
+ggsave(filename = 'Fig4.png', 
+       path = 'output/', device = "png",
+       width = 9, height = 5)
+
 
 # Regional ----------------------------------------------------------------
 
 # Model
 regional_model <- model_by_region(df = micro)
 
-# Plot (Figure 4)
+# Plot (Figure 5)
 plot_ewage_results(regional_model, by_region = TRUE)
 
 # Save
-ggsave(filename = 'Fig4.png', 
+ggsave(filename = 'Fig5.png', 
        path = 'output/', device = "png",
        width = 10, height = 7)
 
