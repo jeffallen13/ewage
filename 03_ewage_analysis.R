@@ -30,7 +30,7 @@ plot_regional_mfx(model = ewage_model)
 # Save
 ggsave(filename = 'Fig4.png', 
        path = 'output/', device = "png",
-       width = 9, height = 5)
+       width = 9.5, height = 5)
 
 
 # Regional ----------------------------------------------------------------

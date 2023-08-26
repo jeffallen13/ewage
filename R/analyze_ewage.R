@@ -372,8 +372,8 @@ plot_regional_mfx <- function(model,
     coord_flip() +
     scale_y_continuous(breaks = c(-0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1)) +
     labs(
-      title = paste0("Marginal effects of regions on likelihood of making ", 
-                     "digital merchant payments"),
+      title = paste0("Marginal effects of regional membership on likelihood ", 
+                     "of making digital merchant payments"),
       subtitle = paste0("Baseline region is East Asia & Pacific. ", 
                         "Bands represent 95% confidence intervals."),
       x = "", y = ""
