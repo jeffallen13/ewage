@@ -2,7 +2,11 @@
 
 ### Getting Started
 
-This repository contains the replication files for the paper, "Pay it Forward (Digitally): Sizing up the Global Impact of Electronic Wages on Digital Payment Usage." Users can either clone the repository or download the zip file. Both options are available under the green **Code** drop-down button.
+This repository contains the replication files for: 
+
+> Allen, Jeffrey S. "Pay it forward (digitally): sizing up the global impact of electronic wages on digital payment usage." *Journal of Economics and Finance* (2023), https://doi.org/10.1007/s12197-023-09645-8. 
+
+Users can either clone the repository or download the zip file. Both options are available under the green **Code** drop-down button.
 
 The following execution scripts replicate the analysis in the paper: 
 
